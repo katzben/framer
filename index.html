@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Framer — AI Conversation Constitution</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --surface-alt: #f5f5f4;
+    --border: #e7e5e4;
+    --border-focus: #a8a29e;
+    --text: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #292524;
+    --accent-hover: #44403c;
+    --accent-text: #fafaf9;
+    --amber-bg: #fffbeb;
+    --amber-border: #f59e0b;
+    --amber-text: #92400e;
+    --preset-bg: #f5f5f4;
+    --preset-bg-active: #292524;
+    --preset-text: #44403c;
+    --preset-text-active: #fafaf9;
+    --toggle-track: #d6d3d1;
+    --toggle-track-on: #292524;
+    --toggle-thumb: #ffffff;
+    --output-bg: #1c1917;
+    --output-text: #e7e5e4;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --transition: 150ms ease;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Sections */
+  section {
+    margin-bottom: 32px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+  }
+
+  /* Presets */
+  .presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .preset-btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--preset-text);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .preset-btn:hover {
+    border-color: var(--border-focus);
+    background: var(--surface-alt);
+  }
+
+  .preset-btn.active {
+    background: var(--preset-bg-active);
+    color: var(--preset-text-active);
+    border-color: var(--preset-bg-active);
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Parameter rows */
+  .param {
+    margin-bottom: 24px;
+  }
+
+  .param:last-child {
+    margin-bottom: 0;
+  }
+
+  .param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .param-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .param-value {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* Slider */
+  .slider-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 32px;
+  }
+
+  .slider-stops {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+  }
+
+  .slider-stop {
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    transition: all var(--transition);
+    font-weight: 450;
+  }
+
+  .slider-stop:hover {
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+  }
+
+  .slider-stop.active {
+    color: var(--text);
+    background: var(--surface-alt);
+    font-weight: 550;
+  }
+
+  /* Param hint text */
+  .param-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .param-note {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  /* Dropdown */
+  .dropdown-wrap {
+    position: relative;
+  }
+
+  .dropdown {
+    font-family: var(--font);
+    font-size: 13px;
+    width: 100%;
+    padding: 8px 32px 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    appearance: none;
+    cursor: pointer;
+    transition: border-color var(--transition);
+    font-weight: 450;
+  }
+
+  .dropdown:focus {
+    outline: none;
+    border-color: var(--border-focus);
+  }
+
+  .dropdown-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+  }
+
+  .toggle-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .toggle-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+
+  .toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--toggle-track);
+    border-radius: 11px;
+    transition: background var(--transition);
+  }
+
+  .toggle input:checked + .toggle-track {
+    background: var(--toggle-track-on);
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: var(--toggle-thumb);
+    border-radius: 50%;
+    transition: transform var(--transition);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .toggle input:checked ~ .toggle-thumb {
+    transform: translateX(18px);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* Warning banner */
+  .warnings {
+    margin-bottom: 24px;
+  }
+
+  .warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--amber-text);
+    line-height: 1.5;
+    animation: fadeIn 200ms ease;
+  }
+
+  .warning-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .warning-text {
+    flex: 1;
+  }
+
+  .warning-dismiss {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--amber-text);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    opacity: 0.6;
+    padding: 0 2px;
+    transition: opacity var(--transition);
+  }
+
+  .warning-dismiss:hover {
+    opacity: 1;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Generate button */
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .btn-generate {
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 550;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-text);
+    cursor: pointer;
+    transition: background var(--transition);
+    flex: 1;
+  }
+
+  .btn-generate:hover {
+    background: var(--accent-hover);
+  }
+
+  .btn-copy {
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn-copy:hover {
+    background: var(--surface-alt);
+    border-color: var(--border-focus);
+  }
+
+  .btn-copy.copied {
+    color: #16a34a;
+    border-color: #16a34a;
+  }
+
+  /* Output */
+  .output {
+    background: var(--output-bg);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--output-text);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    min-height: 80px;
+    font-family: var(--font);
+    display: none;
+  }
+
+  .output.visible {
+    display: block;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .container { padding: 32px 16px 64px; }
+    .presets { gap: 6px; }
+    .preset-btn { font-size: 12px; padding: 6px 12px; }
+    .card { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Framer</h1>
+    <p>Generate a constitution prompt to shape your AI conversation.</p>
+  </header>
+
+  <!-- Presets -->
+  <section>
+    <div class="section-label">Profile</div>
+    <div class="presets">
+      <button class="preset-btn" data-preset="thinking">Thinking Partner</button>
+      <button class="preset-btn" data-preset="efficient">Efficient Assistant</button>
+      <button class="preset-btn" data-preset="critical">Critical Reviewer</button>
+      <button class="preset-btn" data-preset="custom">Custom</button>
+    </div>
+  </section>
+
+  <!-- Parameters -->
+  <section>
+    <div class="section-label">Parameters</div>
+    <div class="card">
+
+      <!-- Response length -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Response length</span>
+          <span class="param-value" id="length-value">balanced</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="length">
+            <button class="slider-stop" data-val="concise">Concise</button>
+            <button class="slider-stop active" data-val="balanced">Balanced</button>
+            <button class="slider-stop" data-val="detailed">Detailed</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sycophancy resistance -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Sycophancy resistance</span>
+          <span class="param-value" id="sycophancy-value">balanced</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="sycophancy">
+            <button class="slider-stop" data-val="validate">Validate</button>
+            <button class="slider-stop active" data-val="balanced">Balanced</button>
+            <button class="slider-stop" data-val="challenge">Challenge</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scaffolding -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Scaffolding vs answering</span>
+          <span class="param-value" id="scaffolding-value">guide me</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="scaffolding">
+            <button class="slider-stop" data-val="just-answer">Just answer</button>
+            <button class="slider-stop active" data-val="guide-me">Guide me</button>
+            <button class="slider-stop" data-val="socratic">Socratic</button>
+          </div>
+        </div>
+        <div class="param-hint" id="socratic-hint" style="display: none;">Socratic mode pursues productive confusion leading to insight — not just asking questions instead of answering. Expect to be challenged, not guided.</div>
+      </div>
+
+      <!-- Question density -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Question density</span>
+          <span class="param-value" id="questionDensity-value">focused</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="questionDensity">
+            <button class="slider-stop" data-val="single">Single</button>
+            <button class="slider-stop active" data-val="focused">Focused</button>
+            <button class="slider-stop" data-val="multiple">Multiple</button>
+          </div>
+        </div>
+        <div class="param-note">How many probing questions per response?</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Pushback type -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Pushback type</span>
+        </div>
+        <div class="dropdown-wrap">
+          <select class="dropdown" id="pushback">
+            <option value="factual">Factual errors only</option>
+            <option value="reasoning" selected>Reasoning and assumptions</option>
+            <option value="challenge-even-agreeing">Challenge even when agreeing</option>
+          </select>
+          <span class="dropdown-arrow">&#x25BE;</span>
+        </div>
+      </div>
+
+      <!-- Steelmanning -->
+      <div class="param">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Steelmanning</div>
+            <div class="toggle-desc">Present the strongest version of views you didn't take before critiquing them.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="steelmanning">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Toggles -->
+      <div class="param">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Certainty calibration</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="certainty">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="param">
+        <div class="param-note" id="goal-anchoring-note" style="display: none;">Goal anchoring and drift flagging are built into Thinking Partner, Critical Reviewer, and Custom profiles. The generated constitution will ask the user for their goal and reference it throughout.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Warnings -->
+  <div class="warnings" id="warnings"></div>
+
+  <!-- Output -->
+  <section>
+    <div class="actions">
+      <button class="btn-generate" id="generate">Generate Constitution</button>
+      <button class="btn-copy" id="copy">Copy</button>
+    </div>
+    <div class="output" id="output"></div>
+  </section>
+
+</div>
+
+<script>
+(function() {
+
+  // State
+  const state = {
+    length: 'balanced',
+    sycophancy: 'balanced',
+    scaffolding: 'guide-me',
+    questionDensity: 'focused',
+    pushback: 'reasoning',
+    steelmanning: false,
+    certainty: false,
+    activePreset: null,
+    dismissedWarnings: new Set()
+  };
+
+  // Preset definitions
+  const presets = {
+    'thinking': {
+      length: 'concise', sycophancy: 'challenge', scaffolding: 'socratic',
+      questionDensity: 'single', pushback: 'reasoning', steelmanning: false, certainty: true
+    },
+    'efficient': {
+      length: 'detailed', sycophancy: 'validate', scaffolding: 'just-answer',
+      questionDensity: 'focused', pushback: 'factual', steelmanning: false, certainty: false
+    },
+    'critical': {
+      length: 'balanced', sycophancy: 'challenge', scaffolding: 'guide-me',
+      questionDensity: 'focused', pushback: 'challenge-even-agreeing', steelmanning: true, certainty: true
+    },
+    'custom': {
+      length: 'balanced', sycophancy: 'balanced', scaffolding: 'guide-me',
+      questionDensity: 'focused', pushback: 'reasoning', steelmanning: false, certainty: false
+    }
+  };
+
+  // DOM refs
+  const els = {
+    pushback: document.getElementById('pushback'),
+    steelmanning: document.getElementById('steelmanning'),
+    certainty: document.getElementById('certainty'),
+    output: document.getElementById('output'),
+    warnings: document.getElementById('warnings'),
+    generate: document.getElementById('generate'),
+    copy: document.getElementById('copy'),
+    socraticHint: document.getElementById('socratic-hint'),
+    goalNote: document.getElementById('goal-anchoring-note')
+  };
+
+  function isGoalProfile() {
+    return state.activePreset !== 'efficient';
+  }
+
+  // Slider stops
+  document.querySelectorAll('.slider-stops').forEach(group => {
+    const param = group.dataset.param;
+    group.querySelectorAll('.slider-stop').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state[param] = btn.dataset.val;
+        group.querySelectorAll('.slider-stop').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`${param}-value`).textContent = btn.textContent.toLowerCase();
+        clearPresetIfChanged();
+        updateHints();
+        checkWarnings();
+      });
+    });
+  });
+
+  // Dropdown
+  els.pushback.addEventListener('change', () => {
+    state.pushback = els.pushback.value;
+    clearPresetIfChanged();
+    checkWarnings();
+  });
+
+  // Toggles
+  els.steelmanning.addEventListener('change', () => {
+    state.steelmanning = els.steelmanning.checked;
+    clearPresetIfChanged();
+    checkWarnings();
+  });
+
+  els.certainty.addEventListener('change', () => {
+    state.certainty = els.certainty.checked;
+    clearPresetIfChanged();
+    checkWarnings();
+  });
+
+  // Presets
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyPreset(btn.dataset.preset);
+    });
+  });
+
+  function applyPreset(key) {
+    const p = presets[key];
+    state.length = p.length;
+    state.sycophancy = p.sycophancy;
+    state.scaffolding = p.scaffolding;
+    state.questionDensity = p.questionDensity;
+    state.pushback = p.pushback;
+    state.steelmanning = p.steelmanning;
+    state.certainty = p.certainty;
+    state.activePreset = key;
+    state.dismissedWarnings.clear();
+    syncUI();
+    updateHints();
+    checkWarnings();
+  }
+
+  function syncUI() {
+    // Sliders
+    ['length', 'sycophancy', 'scaffolding', 'questionDensity'].forEach(param => {
+      const group = document.querySelector(`.slider-stops[data-param="${param}"]`);
+      group.querySelectorAll('.slider-stop').forEach(btn => {
+        const isActive = btn.dataset.val === state[param];
+        btn.classList.toggle('active', isActive);
+        if (isActive) {
+          document.getElementById(`${param}-value`).textContent = btn.textContent.toLowerCase();
+        }
+      });
+    });
+
+    // Dropdown
+    els.pushback.value = state.pushback;
+
+    // Toggles
+    els.steelmanning.checked = state.steelmanning;
+    els.certainty.checked = state.certainty;
+
+    // Preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.preset === state.activePreset);
+    });
+  }
+
+  function updateHints() {
+    els.socraticHint.style.display = state.scaffolding === 'socratic' ? 'block' : 'none';
+    els.goalNote.style.display = isGoalProfile() ? 'block' : 'none';
+  }
+
+  function clearPresetIfChanged() {
+    if (!state.activePreset) return;
+    const p = presets[state.activePreset];
+    const match = ['length','sycophancy','scaffolding','questionDensity','pushback','steelmanning','certainty']
+      .every(k => state[k] === p[k]);
+    if (!match) {
+      state.activePreset = null;
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    }
+  }
+
+  // Warnings
+  function checkWarnings() {
+    const rules = [];
+
+    if (state.scaffolding === 'socratic' && state.length === 'detailed') {
+      rules.push({ id: 'socratic-detailed', text: 'Socratic scaffolding works best with concise responses — detailed output may undermine the guided-discovery approach.' });
+    }
+    if (state.pushback === 'challenge-even-agreeing' && state.sycophancy === 'validate') {
+      rules.push({ id: 'challenge-validate', text: '"Challenge even when agreeing" conflicts with a validating stance — the model will receive contradictory instructions.' });
+    }
+    if (state.scaffolding === 'socratic' && !state.certainty) {
+      rules.push({ id: 'socratic-no-certainty', text: 'Socratic mode pairs well with certainty calibration — without it, guiding questions may lack epistemic transparency.' });
+    }
+
+    const active = rules.filter(r => !state.dismissedWarnings.has(r.id));
+
+    els.warnings.innerHTML = active.map(r => `
+      <div class="warning" data-id="${r.id}">
+        <span class="warning-icon">&#x26A0;</span>
+        <span class="warning-text">${r.text}</span>
+        <button class="warning-dismiss" onclick="dismissWarning('${r.id}')">&times;</button>
+      </div>
+    `).join('');
+  }
+
+  window.dismissWarning = function(id) {
+    state.dismissedWarnings.add(id);
+    checkWarnings();
+  };
+
+  // Generate
+  els.generate.addEventListener('click', () => {
+    state.dismissedWarnings.clear();
+    checkWarnings();
+
+    const text = buildConstitution();
+    els.output.textContent = text;
+    els.output.classList.add('visible');
+  });
+
+  // Copy
+  els.copy.addEventListener('click', () => {
+    const text = els.output.textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      els.copy.textContent = 'Copied';
+      els.copy.classList.add('copied');
+      setTimeout(() => {
+        els.copy.textContent = 'Copy';
+        els.copy.classList.remove('copied');
+      }, 1500);
+    });
+  });
+
+  // Constitution builder
+  function buildConstitution() {
+    const parts = [];
+    const goalProfile = isGoalProfile();
+
+    // Scaffolding & response style
+    if (state.scaffolding === 'just-answer') {
+      parts.push('Give me direct, complete answers. Do not walk me through your reasoning step by step or ask me leading questions — I want the solution, not the journey. If I ask a question, answer it.');
+    } else if (state.scaffolding === 'guide-me') {
+      parts.push('Balance between giving me answers and helping me think through problems. When a concept is straightforward, explain it directly. When I would benefit from working through the reasoning, guide me with targeted hints or partial explanations before revealing the full answer.');
+    } else {
+      parts.push('Help me arrive at answers myself through productive confusion. Do not simply rephrase my question back at me or ask leading questions with obvious answers — instead, surface tensions in my thinking, offer counterexamples that complicate my assumptions, and create the conditions for genuine insight. Resist giving me the answer outright. Only provide direct answers if I explicitly ask you to stop and just tell me.');
+    }
+
+    // Response length
+    if (state.length === 'concise') {
+      parts.push('Keep responses concise. Say what needs to be said and stop. Avoid preamble, filler, and unnecessary elaboration.');
+    } else if (state.length === 'detailed') {
+      parts.push('Provide thorough, detailed responses. Explain context, cover edge cases, and include relevant background. It is better to be comprehensive than to risk leaving out something useful.');
+    } else {
+      parts.push('Aim for a balanced response length — enough detail to be clear and useful, but not so much that the signal gets buried.');
+    }
+
+    // Conflict resolution: Concise + Socratic + Challenge
+    if (state.length === 'concise' && state.scaffolding === 'socratic' && state.sycophancy === 'challenge') {
+      parts.push('When conciseness and depth conflict, prioritize the single most important question over elaboration.');
+    }
+
+    // Question density
+    if (state.questionDensity === 'single') {
+      parts.push('Limit yourself to one probing question per response. Make it count.');
+    } else if (state.questionDensity === 'multiple') {
+      parts.push('Feel free to ask multiple probing questions per response when different angles of inquiry would be productive.');
+    } else {
+      parts.push('Ask one or two focused questions per response when they would advance the conversation — no more.');
+    }
+
+    // Sycophancy / pushback
+    parts.push('');
+    if (state.sycophancy === 'validate') {
+      parts.push('Be supportive and affirming in your responses. When I share an idea or approach, start from the assumption that it has merit and help me develop it further.');
+    } else if (state.sycophancy === 'challenge') {
+      parts.push('Do not simply agree with me. If you see a flaw in my reasoning, a questionable assumption, or a better alternative, say so directly. I value honest feedback over comfortable agreement.');
+    } else {
+      parts.push('Be honest in your assessments. Agree when I am right, but do not hesitate to point out issues when you see them.');
+    }
+
+    // Pushback type
+    if (state.pushback === 'factual') {
+      parts.push('Correct me when I state something factually wrong, but do not nitpick my reasoning approach or challenge my assumptions unless they lead to clear errors.');
+    } else if (state.pushback === 'reasoning') {
+      parts.push('Push back not just on factual errors but also on weak reasoning, hidden assumptions, and logical gaps. If my argument has a structural problem, flag it even if the conclusion might be right.');
+    } else {
+      parts.push('Challenge my thinking even when you agree with my conclusion. Explore the strongest counterarguments and alternative perspectives. Stress-test my reasoning by arguing the other side, so that agreement is earned rather than assumed.');
+    }
+
+    // Steelmanning
+    if (state.steelmanning) {
+      parts.push('When you disagree with a position or are about to critique an idea, first present the strongest possible version of that view. Steelman it before you dismantle it, so I can see you have genuinely engaged with the alternative.');
+    }
+
+    // Certainty calibration
+    if (state.certainty) {
+      parts.push('');
+      parts.push('Be transparent about your confidence level. When you are uncertain, say so. When you are speculating or reasoning from incomplete information, distinguish that clearly from things you know well. Do not present guesses with the same authority as established facts.');
+    }
+
+    // Profile-based closing
+    parts.push('');
+    if (!goalProfile) {
+      parts.push('Do not ask clarifying questions or add preamble — get straight to work with whatever I give you.');
+    } else {
+      parts.push('Begin by asking me what I am trying to figure out or accomplish in this conversation. Use my answer as the goal for our session. If the conversation drifts from that goal, flag it briefly — a short note like "this seems tangential to what we set out to do" is enough — then let me decide whether to continue the tangent or refocus.');
+    }
+
+    return parts.join('\n');
+  }
+
+  // Initialize
+  updateHints();
+  checkWarnings();
+
+})();
+</script>
+</body>
+</html>
