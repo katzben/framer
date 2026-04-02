@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Framer</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --surface-alt: #f5f5f4;
+    --border: #e7e5e4;
+    --border-focus: #a8a29e;
+    --text: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #292524;
+    --accent-hover: #44403c;
+    --accent-text: #fafaf9;
+    --amber-bg: #fffbeb;
+    --amber-border: #f59e0b;
+    --amber-text: #92400e;
+    --preset-bg: #f5f5f4;
+    --preset-bg-active: #292524;
+    --preset-text: #44403c;
+    --preset-text-active: #fafaf9;
+    --toggle-track: #d6d3d1;
+    --toggle-track-on: #292524;
+    --toggle-thumb: #ffffff;
+    --output-bg: #1c1917;
+    --output-text: #e7e5e4;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --transition: 150ms ease;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 400px;
+    min-height: 100px;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px 16px 12px;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 2px;
+  }
+
+  header p {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* Sections */
+  section {
+    margin-bottom: 20px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+  }
+
+  /* Presets */
+  .presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .preset-btn {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--preset-text);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .preset-btn:hover {
+    border-color: var(--border-focus);
+    background: var(--surface-alt);
+  }
+
+  .preset-btn.active {
+    background: var(--preset-bg-active);
+    color: var(--preset-text-active);
+    border-color: var(--preset-bg-active);
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Parameter rows */
+  .param {
+    margin-bottom: 18px;
+  }
+
+  .param:last-child {
+    margin-bottom: 0;
+  }
+
+  .param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .param-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .param-value {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* Slider */
+  .slider-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 28px;
+  }
+
+  .slider-stops {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+  }
+
+  .slider-stop {
+    font-family: var(--font);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 3px 7px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    transition: all var(--transition);
+    font-weight: 450;
+  }
+
+  .slider-stop:hover {
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+  }
+
+  .slider-stop.active {
+    color: var(--text);
+    background: var(--surface-alt);
+    font-weight: 550;
+  }
+
+  /* Param hint text */
+  .param-hint {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .param-note {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  /* Dropdown */
+  .dropdown-wrap {
+    position: relative;
+  }
+
+  .dropdown {
+    font-family: var(--font);
+    font-size: 12px;
+    width: 100%;
+    padding: 7px 28px 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    appearance: none;
+    cursor: pointer;
+    transition: border-color var(--transition);
+    font-weight: 450;
+  }
+
+  .dropdown:focus {
+    outline: none;
+    border-color: var(--border-focus);
+  }
+
+  .dropdown-arrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+  }
+
+  .toggle-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toggle-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .toggle-desc {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--toggle-track);
+    border-radius: 10px;
+    transition: background var(--transition);
+  }
+
+  .toggle input:checked + .toggle-track {
+    background: var(--toggle-track-on);
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: var(--toggle-thumb);
+    border-radius: 50%;
+    transition: transform var(--transition);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .toggle input:checked ~ .toggle-thumb {
+    transform: translateX(16px);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 14px 0;
+  }
+
+  /* Warning banner */
+  .warnings {
+    margin-bottom: 16px;
+  }
+
+  .warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: var(--radius);
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--amber-text);
+    line-height: 1.5;
+    animation: fadeIn 200ms ease;
+  }
+
+  .warning-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .warning-text {
+    flex: 1;
+  }
+
+  .warning-dismiss {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--amber-text);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.6;
+    padding: 0 2px;
+    transition: opacity var(--transition);
+  }
+
+  .warning-dismiss:hover {
+    opacity: 1;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Generate button */
+  .actions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .btn-generate {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 550;
+    padding: 9px 16px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-text);
+    cursor: pointer;
+    transition: background var(--transition);
+    flex: 1;
+  }
+
+  .btn-generate:hover {
+    background: var(--accent-hover);
+  }
+
+  .btn-copy {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn-copy:hover {
+    background: var(--surface-alt);
+    border-color: var(--border-focus);
+  }
+
+  .btn-copy.copied {
+    color: #16a34a;
+    border-color: #16a34a;
+  }
+
+  /* Output */
+  .output {
+    background: var(--output-bg);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--output-text);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: var(--font);
+    display: none;
+  }
+
+  .output.visible {
+    display: block;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-alt);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--toggle-track);
+    flex-shrink: 0;
+  }
+
+  .status-dot.active {
+    background: #22c55e;
+  }
+
+  .status-text {
+    flex: 1;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Framer</h1>
+    <p>Shape your AI conversation with a constitution.</p>
+  </header>
+
+  <!-- Presets -->
+  <section>
+    <div class="section-label">Profile</div>
+    <div class="presets">
+      <button class="preset-btn" data-preset="thinking">Thinking Partner</button>
+      <button class="preset-btn" data-preset="efficient">Efficient Assistant</button>
+      <button class="preset-btn" data-preset="critical">Critical Reviewer</button>
+      <button class="preset-btn" data-preset="custom">Custom</button>
+    </div>
+  </section>
+
+  <!-- Parameters -->
+  <section>
+    <div class="section-label">Parameters</div>
+    <div class="card">
+
+      <!-- Response length -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Response length</span>
+          <span class="param-value" id="length-value">balanced</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="length">
+            <button class="slider-stop" data-val="concise">Concise</button>
+            <button class="slider-stop active" data-val="balanced">Balanced</button>
+            <button class="slider-stop" data-val="detailed">Detailed</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sycophancy resistance -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Sycophancy resistance</span>
+          <span class="param-value" id="sycophancy-value">balanced</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="sycophancy">
+            <button class="slider-stop" data-val="validate">Validate</button>
+            <button class="slider-stop active" data-val="balanced">Balanced</button>
+            <button class="slider-stop" data-val="challenge">Challenge</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scaffolding -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Scaffolding vs answering</span>
+          <span class="param-value" id="scaffolding-value">guide me</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="scaffolding">
+            <button class="slider-stop" data-val="just-answer">Just answer</button>
+            <button class="slider-stop active" data-val="guide-me">Guide me</button>
+            <button class="slider-stop" data-val="socratic">Socratic</button>
+          </div>
+        </div>
+        <div class="param-hint" id="socratic-hint" style="display: none;">Socratic mode pursues productive confusion leading to insight — not just asking questions instead of answering.</div>
+      </div>
+
+      <!-- Question density -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Question density</span>
+          <span class="param-value" id="questionDensity-value">focused</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-stops" data-param="questionDensity">
+            <button class="slider-stop" data-val="single">Single</button>
+            <button class="slider-stop active" data-val="focused">Focused</button>
+            <button class="slider-stop" data-val="multiple">Multiple</button>
+          </div>
+        </div>
+        <div class="param-note">How many probing questions per response?</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Pushback type -->
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Pushback type</span>
+        </div>
+        <div class="dropdown-wrap">
+          <select class="dropdown" id="pushback">
+            <option value="factual">Factual errors only</option>
+            <option value="reasoning" selected>Reasoning and assumptions</option>
+            <option value="challenge-even-agreeing">Challenge even when agreeing</option>
+          </select>
+          <span class="dropdown-arrow">&#x25BE;</span>
+        </div>
+      </div>
+
+      <!-- Steelmanning -->
+      <div class="param">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Steelmanning</div>
+            <div class="toggle-desc">Present the strongest version of views you didn't take before critiquing them.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="steelmanning">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Certainty calibration -->
+      <div class="param">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Certainty calibration</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="certainty">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="param">
+        <div class="param-note" id="goal-anchoring-note" style="display: none;">Goal anchoring and drift flagging are built into Thinking Partner, Critical Reviewer, and Custom profiles.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Auto-inject toggle -->
+  <section>
+    <div class="card">
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-label">Auto-inject on first message</div>
+          <div class="toggle-desc">Prepend constitution to your first message on supported platforms.</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="auto-inject" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Warnings -->
+  <div class="warnings" id="warnings"></div>
+
+  <!-- Output -->
+  <section>
+    <div class="actions">
+      <button class="btn-generate" id="generate">Generate Constitution</button>
+      <button class="btn-copy" id="copy">Copy</button>
+    </div>
+    <div class="output" id="output"></div>
+  </section>
+
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <div class="status-dot" id="status-dot"></div>
+  <span class="status-text" id="status-text">Checking...</span>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
