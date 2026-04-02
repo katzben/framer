@@ -36,6 +36,32 @@
 
   const SAVED_KEYS = ['length', 'sycophancy', 'scaffolding', 'questionDensity', 'pushback', 'steelmanning', 'certainty', 'autoInject', 'activePreset'];
 
+  // Platform detection from active tab
+  const PLATFORM_DOMAINS = {
+    'claude.ai': 'claude',
+    'chat.openai.com': 'chatgpt',
+    'chatgpt.com': 'chatgpt',
+    'gemini.google.com': 'gemini'
+  };
+
+  const PLATFORM_NAMES = {
+    'claude': 'Claude',
+    'chatgpt': 'ChatGPT',
+    'gemini': 'Gemini'
+  };
+
+  let currentPlatform = null; // 'claude', 'chatgpt', 'gemini', or null
+  let onSupportedSite = false; // true only when the active tab is a supported platform
+  let hasConstitution = false; // whether storage has a constitution for the current platform
+
+  function settingsKeyForPlatform(platform) {
+    return platform + '_settings';
+  }
+
+  function constitutionKeyForPlatform(platform) {
+    return platform + '_constitution';
+  }
+
   // DOM refs
   const els = {
     pushback: document.getElementById('pushback'),
@@ -49,65 +75,135 @@
     socraticHint: document.getElementById('socratic-hint'),
     goalNote: document.getElementById('goal-anchoring-note'),
     statusDot: document.getElementById('status-dot'),
-    statusText: document.getElementById('status-text')
+    statusText: document.getElementById('status-text'),
+    clearBtn: document.getElementById('clear-btn'),
+    platformLabel: document.getElementById('platform-label')
   };
 
   function isGoalProfile() {
     return state.activePreset !== 'efficient';
   }
 
-  // --- Persistence ---
+  // --- Persistence (per-platform) ---
 
   function saveState() {
     const data = {};
     SAVED_KEYS.forEach(k => { data[k] = state[k]; });
-    chrome.storage.sync.set({ framerSettings: data });
+
+    const platform = currentPlatform || 'claude';
+    const storageObj = {};
+    storageObj[settingsKeyForPlatform(platform)] = data;
+    storageObj.lastPlatform = platform;
+    chrome.storage.sync.set(storageObj);
+  }
+
+  function generateAndSave() {
+    const text = buildConstitution();
+    els.output.textContent = text;
+    els.output.classList.add('visible');
+
+    const platform = currentPlatform || 'claude';
+    const storageObj = {};
+    storageObj[constitutionKeyForPlatform(platform)] = text;
+    chrome.storage.sync.set(storageObj);
+    hasConstitution = true;
+    updateStatus();
   }
 
   function loadState() {
     return new Promise(resolve => {
-      chrome.storage.sync.get('framerSettings', result => {
-        if (result.framerSettings) {
-          const saved = result.framerSettings;
-          SAVED_KEYS.forEach(k => {
-            if (saved[k] !== undefined) state[k] = saved[k];
-          });
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        // Detect platform from active tab
+        if (tabs[0] && tabs[0].url) {
+          for (const [domain, plat] of Object.entries(PLATFORM_DOMAINS)) {
+            if (tabs[0].url.includes(domain)) {
+              currentPlatform = plat;
+              onSupportedSite = true;
+              break;
+            }
+          }
         }
-        resolve();
+
+        // Determine which settings key to load
+        const keysToLoad = ['lastPlatform'];
+        ['claude', 'chatgpt', 'gemini'].forEach(p => {
+          keysToLoad.push(settingsKeyForPlatform(p));
+          keysToLoad.push(constitutionKeyForPlatform(p));
+        });
+
+        chrome.storage.sync.get(keysToLoad, result => {
+          // If not on a supported platform, use last used platform or default to claude
+          if (!currentPlatform) {
+            currentPlatform = result.lastPlatform || 'claude';
+          }
+
+          const saved = result[settingsKeyForPlatform(currentPlatform)];
+          if (saved) {
+            SAVED_KEYS.forEach(k => {
+              if (saved[k] !== undefined) state[k] = saved[k];
+            });
+          }
+
+          // Check if a constitution exists for this platform
+          hasConstitution = !!result[constitutionKeyForPlatform(currentPlatform)];
+
+          resolve();
+        });
       });
     });
   }
 
   // --- Status bar ---
 
-  const PLATFORM_NAMES = {
-    'claude.ai': 'Claude',
-    'chat.openai.com': 'ChatGPT',
-    'chatgpt.com': 'ChatGPT',
-    'gemini.google.com': 'Gemini'
-  };
-
   function updateStatus() {
-    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-      if (!tabs[0] || !tabs[0].url) {
-        setStatus(false, 'No active AI platform');
-        return;
+    const name = PLATFORM_NAMES[currentPlatform] || 'Unknown';
+
+    if (onSupportedSite) {
+      els.clearBtn.style.display = '';
+      els.platformLabel.style.display = '';
+      els.platformLabel.textContent = `Settings for: ${name}`;
+
+      if (hasConstitution) {
+        els.statusDot.className = 'status-dot active';
+        els.statusText.textContent = `${name} detected \u2014 constitution ready`;
+      } else {
+        els.statusDot.className = 'status-dot amber';
+        els.statusText.textContent = `${name} detected \u2014 no constitution set`;
       }
-      const url = tabs[0].url;
-      for (const [domain, name] of Object.entries(PLATFORM_NAMES)) {
-        if (url.includes(domain)) {
-          setStatus(true, `${name} detected`);
-          return;
-        }
-      }
-      setStatus(false, 'No active AI platform');
-    });
+    } else {
+      els.statusDot.className = 'status-dot';
+      els.statusText.textContent = 'No active AI platform';
+      els.clearBtn.style.display = 'none';
+      els.platformLabel.style.display = '';
+      els.platformLabel.textContent = `Settings for: ${name}`;
+    }
   }
 
-  function setStatus(active, text) {
-    els.statusDot.className = 'status-dot' + (active ? ' active' : '');
-    els.statusText.textContent = text;
-  }
+  // --- Clear constitution ---
+
+  els.clearBtn.addEventListener('click', () => {
+    const platform = currentPlatform || 'claude';
+    const constKey = constitutionKeyForPlatform(platform);
+
+    // Remove constitution from storage
+    chrome.storage.sync.remove(constKey);
+    hasConstitution = false;
+
+    // Clear displayed output
+    els.output.textContent = '';
+    els.output.classList.remove('visible');
+
+    // Reset injection in content script
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+      if (!tabs[0]) return;
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'framer-reset-injection' }, () => {
+        if (chrome.runtime.lastError) { /* no-op */ }
+      });
+    });
+
+    // Update status to reflect no constitution
+    updateStatus();
+  });
 
   // --- UI wiring ---
 
@@ -247,7 +343,6 @@
       </div>
     `).join('');
 
-    // Attach dismiss handlers (no inline onclick in extensions)
     els.warnings.querySelectorAll('.warning-dismiss').forEach(btn => {
       btn.addEventListener('click', () => {
         state.dismissedWarnings.add(btn.dataset.dismiss);
@@ -260,13 +355,7 @@
   els.generate.addEventListener('click', () => {
     state.dismissedWarnings.clear();
     checkWarnings();
-
-    const text = buildConstitution();
-    els.output.textContent = text;
-    els.output.classList.add('visible');
-
-    // Save constitution to storage
-    chrome.storage.sync.set({ constitution: text });
+    generateAndSave();
   });
 
   // Copy
@@ -358,6 +447,11 @@
     updateHints();
     checkWarnings();
     updateStatus();
+
+    // Auto-generate on first load if no constitution exists for this platform
+    if (!hasConstitution) {
+      generateAndSave();
+    }
   });
 
 })();

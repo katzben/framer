@@ -79,17 +79,20 @@
 
   // --- Load settings eagerly so injection is synchronous at send time ---
 
-  chrome.storage.sync.get(['constitution', 'framerSettings'], (data) => {
-    constitution = data.constitution || null;
-    autoInject = data.framerSettings?.autoInject !== false;
+  const constitutionKey = platform + '_constitution';
+  const settingsKey = platform + '_settings';
+
+  chrome.storage.sync.get([constitutionKey, settingsKey], (data) => {
+    constitution = data[constitutionKey] || null;
+    autoInject = data[settingsKey]?.autoInject !== false;
   });
 
   chrome.storage.onChanged.addListener((changes) => {
-    if (changes.constitution) {
-      constitution = changes.constitution.newValue || null;
+    if (changes[constitutionKey]) {
+      constitution = changes[constitutionKey].newValue || null;
     }
-    if (changes.framerSettings) {
-      autoInject = changes.framerSettings.newValue?.autoInject !== false;
+    if (changes[settingsKey]) {
+      autoInject = changes[settingsKey].newValue?.autoInject !== false;
     }
   });
 
@@ -127,6 +130,10 @@
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'framer-tab-ready') {
       onNavigate();
+    }
+    if (msg.type === 'framer-reset-injection') {
+      injected = false;
+      removeIndicator();
     }
   });
 

@@ -467,8 +467,45 @@
     background: #22c55e;
   }
 
+  .status-dot.amber {
+    background: #f59e0b;
+  }
+
   .status-text {
     flex: 1;
+  }
+
+  .btn-reset {
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+    flex-shrink: 0;
+  }
+
+  .btn-reset:hover {
+    background: var(--surface-alt);
+    border-color: var(--border-focus);
+    color: var(--text);
+  }
+
+  .platform-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+
+  .header-instruction {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
   }
 </style>
 </head>
@@ -478,6 +515,8 @@
   <header>
     <h1>Framer</h1>
     <p>Shape your AI conversation with a constitution.</p>
+    <div class="platform-label" id="platform-label" style="display: none;"></div>
+    <p class="header-instruction">Choose your settings and generate your constitution below.</p>
   </header>
 
   <!-- Presets -->
@@ -648,6 +687,7 @@
 <div class="status-bar">
   <div class="status-dot" id="status-dot"></div>
   <span class="status-text" id="status-text">Checking...</span>
+  <button class="btn-reset" id="clear-btn" style="display: none;">Clear</button>
 </div>
 
 <script src="popup.js"></script>
