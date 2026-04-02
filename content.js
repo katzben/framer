@@ -1,10 +1,75 @@
 (function () {
   'use strict';
 
-  // Only run on claude.ai
-  if (!location.hostname.includes('claude.ai')) return;
+  // --- Platform detection ---
 
-  console.log('Framer content script loaded');
+  function detectPlatform() {
+    const host = location.hostname;
+    if (host.includes('claude.ai')) return 'claude';
+    if (host.includes('chat.openai.com') || host.includes('chatgpt.com')) return 'chatgpt';
+    if (host.includes('gemini.google.com')) return 'gemini';
+    return null;
+  }
+
+  const platform = detectPlatform();
+  if (!platform) return;
+
+  // Platform-specific selectors
+  const PLATFORM_CONFIG = {
+    claude: {
+      getEditor() {
+        const editors = document.querySelectorAll('div[contenteditable="true"]');
+        for (const el of editors) {
+          if (el.offsetParent !== null) return el;
+        }
+        return editors[0] || null;
+      },
+      isSendButton(button, editor) {
+        if (!button || !editor) return false;
+        const label = (button.getAttribute('aria-label') || '').toLowerCase();
+        if (label.includes('send')) return true;
+        const container =
+          editor.closest('form') ||
+          editor.closest('fieldset') ||
+          editor.closest('[class*="composer"]') ||
+          editor.closest('[class*="input"]') ||
+          nthParent(editor, 5);
+        if (!container || !container.contains(button)) return false;
+        const skip = ['attach', 'upload', 'microphone', 'mic', 'image', 'file', 'model', 'plus'];
+        if (skip.some((w) => label.includes(w))) return false;
+        if (button.querySelector('svg')) return true;
+        return false;
+      },
+    },
+    chatgpt: {
+      getEditor() {
+        return document.querySelector('div#prompt-textarea[contenteditable="true"]') || null;
+      },
+      isSendButton(button) {
+        if (!button) return false;
+        return button.dataset.testid === 'send-button' ||
+          button.closest('[data-testid="send-button"]') !== null;
+      },
+    },
+    gemini: {
+      getEditor() {
+        const editors = document.querySelectorAll('div[contenteditable="true"]');
+        for (const el of editors) {
+          if (el.classList && Array.from(el.classList).some(c => c.includes('ql-editor'))) return el;
+        }
+        return null;
+      },
+      isSendButton(button) {
+        if (!button) return false;
+        const label = (button.getAttribute('aria-label') || '').toLowerCase();
+        return label === 'send message';
+      },
+    },
+  };
+
+  const config = PLATFORM_CONFIG[platform];
+
+  console.log(`Framer content script loaded (${platform})`);
 
   // --- State ---
   let injected = false;
@@ -29,7 +94,7 @@
   });
 
   // --- SPA navigation detection ---
-  // Claude.ai is a SPA — URL changes without full page reloads.
+  // All three platforms are SPAs — URL changes without full page reloads.
   // Intercept pushState/replaceState and popstate to detect navigation.
 
   function onNavigate() {
@@ -68,47 +133,15 @@
   // --- DOM helpers ---
 
   function getEditor() {
-    // Claude's input is a contenteditable div — grab the first one that is
-    // visible and actually editable (there may be hidden/inactive ones).
-    const editors = document.querySelectorAll('div[contenteditable="true"]');
-    for (const el of editors) {
-      if (el.offsetParent !== null) return el; // visible
-    }
-    return editors[0] || null;
+    return config.getEditor();
   }
 
   function getEditorText(editor) {
     return (editor.innerText || '').trim();
   }
 
-  /** Is `button` a send-type button inside the composer area that contains `editor`? */
   function isSendButton(button, editor) {
-    if (!button || !editor) return false;
-
-    // Quick attribute checks
-    const label = (button.getAttribute('aria-label') || '').toLowerCase();
-    if (label.includes('send')) return true;
-
-    // Heuristic: the button lives in the same composer container as the editor
-    // and is *not* a known non-send button (attach, mic, etc.)
-    const container =
-      editor.closest('form') ||
-      editor.closest('fieldset') ||
-      editor.closest('[class*="composer"]') ||
-      editor.closest('[class*="input"]') ||
-      nthParent(editor, 5);
-
-    if (!container || !container.contains(button)) return false;
-
-    // Exclude buttons whose labels clearly aren't "send"
-    const skip = ['attach', 'upload', 'microphone', 'mic', 'image', 'file', 'model', 'plus'];
-    if (skip.some((w) => label.includes(w))) return false;
-
-    // If the button contains an SVG (icon-only button) and is near the editor,
-    // treat it as the send button — Claude's send button is an icon button.
-    if (button.querySelector('svg')) return true;
-
-    return false;
+    return config.isSendButton(button, editor);
   }
 
   function nthParent(el, n) {
@@ -229,7 +262,7 @@
   /**
    * Attempt to inject the constitution into the editor.
    * Called synchronously in the capture phase of keydown / click,
-   * so the modified content is in place before Claude's own handlers fire.
+   * so the modified content is in place before the platform's own handlers fire.
    */
   function tryInject(editor) {
     if (injected) return;
@@ -248,7 +281,7 @@
     }
   }
 
-  // --- Event listeners (capture phase — runs before Claude's handlers) ---
+  // --- Event listeners (capture phase — runs before platform handlers) ---
 
   document.addEventListener(
     'keydown',

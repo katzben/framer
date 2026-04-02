@@ -83,6 +83,7 @@
   const PLATFORM_NAMES = {
     'claude.ai': 'Claude',
     'chat.openai.com': 'ChatGPT',
+    'chatgpt.com': 'ChatGPT',
     'gemini.google.com': 'Gemini'
   };
 
