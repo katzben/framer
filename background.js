@@ -1,6 +1,7 @@
 const SUPPORTED_URLS = [
   "https://claude.ai/",
   "https://chat.openai.com/",
+  "https://chatgpt.com/",
   "https://gemini.google.com/"
 ];
 

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Framer",
-  "description": "Shape your AI conversations with a cognitive constitution",
-  "version": "1.0",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "name": "Conversation Framer",
+  "description": "Shape your AI conversations with a cognitive constitution. Set parameters that reduce sycophancy, improve scaffolding, and protect your thinking.",
+  "version": "1.1",
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://claude.ai/*",
     "https://chat.openai.com/*",

@@ -69,7 +69,7 @@
 
   const config = PLATFORM_CONFIG[platform];
 
-  console.log(`Framer content script loaded (${platform})`);
+  console.log(`Conversation Framer content script loaded (${platform})`);
 
   // --- State ---
   let injected = false;
@@ -171,7 +171,7 @@
 
     const el = document.createElement('div');
     el.id = INDICATOR_ID;
-    el.textContent = '\u2713 Framer active';
+    el.textContent = '\u2713 Conversation Framer active';
     Object.assign(el.style, {
       position: 'fixed',
       bottom: '12px',
@@ -209,7 +209,7 @@
 
     const el = document.createElement('div');
     el.id = INDICATOR_ID;
-    el.textContent = 'No constitution set \u2014 open Framer to generate one';
+    el.textContent = 'No constitution set \u2014 open Conversation Framer to generate one';
     Object.assign(el.style, {
       position: 'fixed',
       bottom: '12px',

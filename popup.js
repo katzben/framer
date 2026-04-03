@@ -335,19 +335,33 @@
 
     const active = rules.filter(r => !state.dismissedWarnings.has(r.id));
 
-    els.warnings.innerHTML = active.map(r => `
-      <div class="warning" data-id="${r.id}">
-        <span class="warning-icon">&#x26A0;</span>
-        <span class="warning-text">${r.text}</span>
-        <button class="warning-dismiss" data-dismiss="${r.id}">&times;</button>
-      </div>
-    `).join('');
+    els.warnings.textContent = '';
+    active.forEach(r => {
+      const warning = document.createElement('div');
+      warning.className = 'warning';
+      warning.dataset.id = r.id;
 
-    els.warnings.querySelectorAll('.warning-dismiss').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.dismissedWarnings.add(btn.dataset.dismiss);
+      const icon = document.createElement('span');
+      icon.className = 'warning-icon';
+      icon.textContent = '\u26A0';
+
+      const text = document.createElement('span');
+      text.className = 'warning-text';
+      text.textContent = r.text;
+
+      const dismiss = document.createElement('button');
+      dismiss.className = 'warning-dismiss';
+      dismiss.dataset.dismiss = r.id;
+      dismiss.textContent = '\u00D7';
+      dismiss.addEventListener('click', () => {
+        state.dismissedWarnings.add(r.id);
         checkWarnings();
       });
+
+      warning.appendChild(icon);
+      warning.appendChild(text);
+      warning.appendChild(dismiss);
+      els.warnings.appendChild(warning);
     });
   }
 
