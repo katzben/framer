@@ -70,7 +70,6 @@
     autoInject: document.getElementById('auto-inject'),
     output: document.getElementById('output'),
     warnings: document.getElementById('warnings'),
-    generate: document.getElementById('generate'),
     copy: document.getElementById('copy'),
     socraticHint: document.getElementById('socratic-hint'),
     goalNote: document.getElementById('goal-anchoring-note'),
@@ -100,7 +99,6 @@
   function generateAndSave() {
     const text = buildConstitution();
     els.output.textContent = text;
-    els.output.classList.add('visible');
 
     const platform = currentPlatform || 'claude';
     const storageObj = {};
@@ -189,10 +187,6 @@
     chrome.storage.sync.remove(constKey);
     hasConstitution = false;
 
-    // Clear displayed output
-    els.output.textContent = '';
-    els.output.classList.remove('visible');
-
     // Reset injection in content script
     chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
       if (!tabs[0]) return;
@@ -201,8 +195,8 @@
       });
     });
 
-    // Update status to reflect no constitution
-    updateStatus();
+    // Regenerate from current parameters so output is never empty
+    generateAndSave();
   });
 
   // --- UI wiring ---
@@ -220,6 +214,7 @@
         updateHints();
         checkWarnings();
         saveState();
+        generateAndSave();
       });
     });
   });
@@ -230,6 +225,7 @@
     clearPresetIfChanged();
     checkWarnings();
     saveState();
+    generateAndSave();
   });
 
   // Toggles
@@ -238,6 +234,7 @@
     clearPresetIfChanged();
     checkWarnings();
     saveState();
+    generateAndSave();
   });
 
   els.certainty.addEventListener('change', () => {
@@ -245,6 +242,7 @@
     clearPresetIfChanged();
     checkWarnings();
     saveState();
+    generateAndSave();
   });
 
   els.autoInject.addEventListener('change', () => {
@@ -257,6 +255,7 @@
     btn.addEventListener('click', () => {
       applyPreset(btn.dataset.preset);
       saveState();
+      generateAndSave();
     });
   });
 
@@ -365,22 +364,15 @@
     });
   }
 
-  // Generate
-  els.generate.addEventListener('click', () => {
-    state.dismissedWarnings.clear();
-    checkWarnings();
-    generateAndSave();
-  });
-
   // Copy
   els.copy.addEventListener('click', () => {
     const text = els.output.textContent;
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
-      els.copy.textContent = 'Copied';
+      els.copy.textContent = 'Copied!';
       els.copy.classList.add('copied');
       setTimeout(() => {
-        els.copy.textContent = 'Copy';
+        els.copy.textContent = 'Copy to clipboard';
         els.copy.classList.remove('copied');
       }, 1500);
     });
@@ -460,12 +452,8 @@
     syncUI();
     updateHints();
     checkWarnings();
-    updateStatus();
-
-    // Auto-generate on first load if no constitution exists for this platform
-    if (!hasConstitution) {
-      generateAndSave();
-    }
+    // Always derive constitution from current parameters on open
+    generateAndSave();
   });
 
 })();

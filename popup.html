@@ -373,29 +373,11 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Generate button */
+  /* Actions */
   .actions {
     display: flex;
     gap: 6px;
-    margin-bottom: 12px;
-  }
-
-  .btn-generate {
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 550;
-    padding: 9px 16px;
-    border: none;
-    border-radius: var(--radius);
-    background: var(--accent);
-    color: var(--accent-text);
-    cursor: pointer;
-    transition: background var(--transition);
-    flex: 1;
-  }
-
-  .btn-generate:hover {
-    background: var(--accent-hover);
+    margin-top: 8px;
   }
 
   .btn-copy {
@@ -422,6 +404,12 @@
     border-color: #16a34a;
   }
 
+  .output-subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+
   /* Output */
   .output {
     background: var(--output-bg);
@@ -436,11 +424,6 @@
     max-height: 200px;
     overflow-y: auto;
     font-family: var(--font);
-    display: none;
-  }
-
-  .output.visible {
-    display: block;
   }
 
   /* Status bar */
@@ -516,8 +499,25 @@
     <h1>Conversation Framer</h1>
     <p>Shape your AI conversation with a constitution.</p>
     <div class="platform-label" id="platform-label" style="display: none;"></div>
-    <p class="header-instruction">Choose your settings and generate your constitution below.</p>
+    <p class="header-instruction">Adjust settings below — your constitution updates live.</p>
   </header>
+
+  <!-- Auto-inject toggle -->
+  <section>
+    <div class="card">
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-label">Auto-inject on first message</div>
+          <div class="toggle-desc">Conversation Framer will prepend this to your first message on supported platforms.</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="auto-inject" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+  </section>
 
   <!-- Presets -->
   <section>
@@ -652,33 +652,17 @@
     </div>
   </section>
 
-  <!-- Auto-inject toggle -->
-  <section>
-    <div class="card">
-      <div class="toggle-row">
-        <div class="toggle-info">
-          <div class="toggle-label">Auto-inject on first message</div>
-          <div class="toggle-desc">Prepend constitution to your first message on supported platforms.</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="auto-inject" checked>
-          <div class="toggle-track"></div>
-          <div class="toggle-thumb"></div>
-        </label>
-      </div>
-    </div>
-  </section>
-
   <!-- Warnings -->
   <div class="warnings" id="warnings"></div>
 
   <!-- Output -->
   <section>
-    <div class="actions">
-      <button class="btn-generate" id="generate">Generate Constitution</button>
-      <button class="btn-copy" id="copy">Copy</button>
-    </div>
+    <div class="section-label">Active constitution</div>
+    <div class="output-subtitle">This will be injected into your first message</div>
     <div class="output" id="output"></div>
+    <div class="actions">
+      <button class="btn-copy" id="copy">Copy to clipboard</button>
+    </div>
   </section>
 
 </div>
